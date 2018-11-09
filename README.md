@@ -25,6 +25,8 @@ Run:
 
 Ensure you have `MSBuild.exe` in your `%PATH%`, you can optionally uncomment a call to the `Clean` target.
 
+There should be plenty of `*.binlog` files to look through in the current directory.
+
 ## Problems
 
 How do we organize these targets The Right Way™?
