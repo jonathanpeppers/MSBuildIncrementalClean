@@ -12,7 +12,7 @@
     <_Dex>$(IntermediateOutputPath)$(TargetName).dex</_Dex>
     <_Apk>$(TargetPath).apk</_Apk>
 
-    <!--NOTE: remove this, or _CleanGetCurrentAndPriorFileWrites to see -->
+    <!--NOTE: remove this, or _CleanGetCurrentAndPriorFileWrites to see problems with FileWrites -->
     <_CompileDexBeforeTargets>
       IncrementalClean;
       _CleanGetCurrentAndPriorFileWrites;
