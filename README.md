@@ -3,6 +3,8 @@
 This illustrates an MSBuild problem we are trying to figure out with
 Xamarin.Android.
 
+See [MSBuild Github Issues #3916](https://github.com/Microsoft/msbuild/issues/3916).
+
 We have a few targets that run after `Build`, for example:
 
 * `_GenerateJava` - takes `Foo.dll` -> `Foo.java` in `$(IntermediateOutputPath)`
