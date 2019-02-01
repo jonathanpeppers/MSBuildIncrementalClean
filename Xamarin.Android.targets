@@ -39,6 +39,7 @@
   <Target Name="_CompileDex" DependsOnTargets="_CompileJava"
       BeforeTargets="$(_CompileDexBeforeTargets)"
       Inputs="$(_Jar)" Outputs="$(_Dex)">
+    <Error Text="This is another error you should *not* see!" />
     <Touch Files="$(_Dex)" AlwaysCreate="True" />
     <ItemGroup>
       <FileWrites Include="$(_Dex)" />

@@ -1,1 +1,2 @@
-public class Foo { }
+//Compiler error
+public classy Foo { }
