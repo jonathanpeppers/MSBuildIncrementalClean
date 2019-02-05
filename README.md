@@ -51,3 +51,68 @@ Issues:
    `FileListAbsolute.txt`.
 4. There does not appear to be a `$(IncrementalCleanDependsOn)`:
    [Microsoft.Common.CurrentVersion.targets](https://github.com/Microsoft/msbuild/blob/aec1703e63f3e32ac12dd6946ba94a2b37bded63/src/Tasks/Microsoft.Common.CurrentVersion.targets#L4829-L4831)
+
+# Solution
+
+I don't know if this is the ideal solution, but it works. I will look
+into making this changes in Xamarin.Android, so we will see how that
+goes.
+
+## What to do for `Build`?
+
+If we manually fill out `$(CoreBuildDependsOn)`:
+
+```xml
+<CoreBuildDependsOn>
+  BuildOnlySettings;
+  PrepareForBuild;
+  PreBuildEvent;
+  ResolveReferences;
+  PrepareResources;
+  ResolveKeySource;
+  Compile;
+  GenerateSerializationAssemblies;
+  CreateSatelliteAssemblies;
+  GenerateManifests;
+  GetTargetPath;
+  PrepareForRun;
+  _CompileDex;
+  IncrementalClean;
+  PostBuildEvent
+</CoreBuildDependsOn>
+```
+
+*NOTE: I removed `ExportWindowsMDFile`, `UnmanagedUnregistration`,
+and `UnmanagedRegistration`: they seemed Windows-specific.*
+
+In this case `Build` will run `_CompileDex` *before*
+`IncrementalClean` and everything works.
+
+### Concerns
+
+If a new target is added to `$(CoreBuildDependsOn)`, we won't run it.
+
+That might be OK, since the property hasn't changed in ~4 years:
+
+https://github.com/Microsoft/msbuild/blame/a972ec96c3920705e4e8d03d7ac8b6c3328450bd/src/Tasks/Microsoft.Common.CurrentVersion.targets#L870-L888
+
+## What to do for `SignAndroidPackage`?
+
+So we need `IncrementalClean` to run after the work in
+`SignAndroidPackage` is done.
+
+So to achieve this:
+
+* Moved the actual work in `SignAndroidPackage` to a
+  `_SignAndroidPackage` target. The `SignAndroidPackage` target is
+  empty.
+* Created a new `_AdjustCoreBuildDependsOn` target to remove
+  `IncrementalClean` from `$(CoreBuildDependsOn)`.
+* `SignAndroidPackage` now depends on
+  `_AdjustCoreBuildDependsOn;_SignAndroidPackage;IncrementalClean`
+* Everything works!
+
+### Concerns
+
+Only concern it is a little messy, but seems like a reasonable
+solution?

@@ -3,21 +3,33 @@
   <!--These targets represent what Xamarin.Android's targets look like-->
 
   <PropertyGroup>
-    <BuildDependsOn>
-      $(BuildDependsOn);
+    <_BeforeIncrementalClean>
+      BuildOnlySettings;
+      PrepareForBuild;
+      PreBuildEvent;
+      ResolveReferences;
+      PrepareResources;
+      ResolveKeySource;
+      Compile;
+      GenerateSerializationAssemblies;
+      CreateSatelliteAssemblies;
+      GenerateManifests;
+      GetTargetPath;
+      PrepareForRun;
       _CompileDex;
-    </BuildDependsOn>
+    </_BeforeIncrementalClean>
+    <_AfterIncrementalClean>
+      PostBuildEvent;
+    </_AfterIncrementalClean>
+    <CoreBuildDependsOn>
+      $(_BeforeIncrementalClean);
+      IncrementalClean;
+      $(_AfterIncrementalClean);
+    </CoreBuildDependsOn>
     <_JavaSource>$(IntermediateOutputPath)$(TargetName).java</_JavaSource>
     <_Jar>$(IntermediateOutputPath)$(TargetName).jar</_Jar>
     <_Dex>$(IntermediateOutputPath)$(TargetName).dex</_Dex>
     <_Apk>$(TargetPath).apk</_Apk>
-
-    <!--NOTE: remove this, or _CleanGetCurrentAndPriorFileWrites to see problems with FileWrites -->
-    <_CompileDexBeforeTargets>
-      IncrementalClean;
-      _CleanGetCurrentAndPriorFileWrites;
-    </_CompileDexBeforeTargets>
-
   </PropertyGroup>
 
   <Target Name="_GenerateJava"
@@ -37,7 +49,6 @@
   </Target>
 
   <Target Name="_CompileDex" DependsOnTargets="_CompileJava"
-      BeforeTargets="$(_CompileDexBeforeTargets)"
       Inputs="$(_Jar)" Outputs="$(_Dex)">
     <Touch Files="$(_Dex)" AlwaysCreate="True" />
     <ItemGroup>
@@ -45,12 +56,32 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="SignAndroidPackage" DependsOnTargets="Build"
+  <Target Name="_AdjustCoreBuildDependsOn">
+    <PropertyGroup>
+      <!-- Remove IncrementalClean -->
+      <CoreBuildDependsOn>
+        $(_BeforeIncrementalClean);
+        $(_AfterIncrementalClean);
+      </CoreBuildDependsOn>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="_SignAndroidPackage" DependsOnTargets="Build"
       Inputs="$(TargetPath);$(_Dex)" Outputs="$(_Apk)">
     <Touch Files="$(_Apk)" AlwaysCreate="True" />
     <ItemGroup>
       <FileWrites Include="$(_Apk)" />
     </ItemGroup>
   </Target>
+
+  <PropertyGroup>
+    <SignAndroidPackageDependsOn>
+      _AdjustCoreBuildDependsOn;
+      _SignAndroidPackage;
+      IncrementalClean;
+    </SignAndroidPackageDependsOn>
+  </PropertyGroup>
+
+  <Target Name="SignAndroidPackage" DependsOnTargets="$(SignAndroidPackageDependsOn)" />
 
 </Project>
