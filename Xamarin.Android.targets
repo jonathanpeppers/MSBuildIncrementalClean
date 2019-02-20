@@ -3,28 +3,8 @@
   <!--These targets represent what Xamarin.Android's targets look like-->
 
   <PropertyGroup>
-    <_BeforeIncrementalClean>
-      BuildOnlySettings;
-      PrepareForBuild;
-      PreBuildEvent;
-      ResolveReferences;
-      PrepareResources;
-      ResolveKeySource;
-      Compile;
-      GenerateSerializationAssemblies;
-      CreateSatelliteAssemblies;
-      GenerateManifests;
-      GetTargetPath;
-      PrepareForRun;
-      _CompileDex;
-    </_BeforeIncrementalClean>
-    <_AfterIncrementalClean>
-      PostBuildEvent;
-    </_AfterIncrementalClean>
     <CoreBuildDependsOn>
-      $(_BeforeIncrementalClean);
-      IncrementalClean;
-      $(_AfterIncrementalClean);
+      $([MSBuild]::Unescape($(CoreBuildDependsOn.Replace('IncrementalClean;', '_CompileDex;IncrementalClean;'))))
     </CoreBuildDependsOn>
     <_JavaSource>$(IntermediateOutputPath)$(TargetName).java</_JavaSource>
     <_Jar>$(IntermediateOutputPath)$(TargetName).jar</_Jar>
@@ -60,8 +40,7 @@
     <PropertyGroup>
       <!-- Remove IncrementalClean -->
       <CoreBuildDependsOn>
-        $(_BeforeIncrementalClean);
-        $(_AfterIncrementalClean);
+        $([MSBuild]::Unescape($(CoreBuildDependsOn.Replace('IncrementalClean;', ''))))
       </CoreBuildDependsOn>
     </PropertyGroup>
   </Target>

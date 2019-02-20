@@ -60,41 +60,52 @@ goes.
 
 ## What to do for `Build`?
 
-If we manually fill out `$(CoreBuildDependsOn)`:
+We can use `$([MSBuild]::Unescape())` in combination with
+`$(CoreBuildDependsOn)`:
 
 ```xml
 <CoreBuildDependsOn>
-  BuildOnlySettings;
-  PrepareForBuild;
-  PreBuildEvent;
-  ResolveReferences;
-  PrepareResources;
-  ResolveKeySource;
-  Compile;
-  GenerateSerializationAssemblies;
-  CreateSatelliteAssemblies;
-  GenerateManifests;
-  GetTargetPath;
-  PrepareForRun;
-  _CompileDex;
-  IncrementalClean;
-  PostBuildEvent
+  $([MSBuild]::Unescape($(CoreBuildDependsOn.Replace('IncrementalClean;', '_CompileDex;IncrementalClean;'))))
 </CoreBuildDependsOn>
 ```
-
-*NOTE: I removed `ExportWindowsMDFile`, `UnmanagedUnregistration`,
-and `UnmanagedRegistration`: they seemed Windows-specific.*
 
 In this case `Build` will run `_CompileDex` *before*
 `IncrementalClean` and everything works.
 
 ### Concerns
 
-If a new target is added to `$(CoreBuildDependsOn)`, we won't run it.
+It seems a bit nasty, but works...
 
-That might be OK, since the property hasn't changed in ~4 years:
+The only problem I see:
 
-https://github.com/Microsoft/msbuild/blame/a972ec96c3920705e4e8d03d7ac8b6c3328450bd/src/Tasks/Microsoft.Common.CurrentVersion.targets#L870-L888
+* If a target was named `FooIncrementalClean`, this might break...
+
+The original value of `$(CoreBuildDependsOn)` is:
+```
+
+      BuildOnlySettings;
+      PrepareForBuild;
+      PreBuildEvent;
+      ResolveReferences;
+      PrepareResources;
+      ResolveKeySource;
+      Compile;
+      ExportWindowsMDFile;
+      UnmanagedUnregistration;
+      GenerateSerializationAssemblies;
+      CreateSatelliteAssemblies;
+      GenerateManifests;
+      GetTargetPath;
+      PrepareForRun;
+      UnmanagedRegistration;
+      IncrementalClean;
+      PostBuildEvent
+    
+```
+_Empty newline in front, six spaces starting each line._
+
+So we could always replace " IncrementalClean;" with a space in front,
+I don't know if that is better/worse.
 
 ## What to do for `SignAndroidPackage`?
 
@@ -108,6 +119,7 @@ So to achieve this:
   empty.
 * Created a new `_AdjustCoreBuildDependsOn` target to remove
   `IncrementalClean` from `$(CoreBuildDependsOn)`.
+  `$([MSBuild]::Unescape())` is required.
 * `SignAndroidPackage` now depends on
   `_AdjustCoreBuildDependsOn;_SignAndroidPackage;IncrementalClean`
 * Everything works!
